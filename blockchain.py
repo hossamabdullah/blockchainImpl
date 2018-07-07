@@ -32,7 +32,7 @@ class Blockchain:
         new_proof = 1
         check_proof = False
         while check_proof is False:
-            hash_operation = self._hash_block(proof = new_proof, prev_proof = previous_proof)
+            hash_operation = self._hash_block(proof= new_proof, prev_proof= previous_proof)
             if hash_operation[:4] == '0000':
                 check_proof = True
                 break
@@ -61,7 +61,7 @@ class Blockchain:
             block_index += 1
         return True
     
-    def _hash_block(proof, prev_proof):
+    def _hash_block(self, proof, prev_proof):
         return hashlib.sha256(str(proof**2 -  prev_proof**2).encode()).hexdigest()
         
         
