@@ -73,10 +73,13 @@ blockchain = Blockchain()
 @app.route('/mine_block', methods = ['GET'])
 def mine_block():
     prev_block = blockchain.get_previous_block()
+    
     prev_proof = prev_block['proof']
     proof = blockchain.mine(previous_proof= prev_proof)
+    
     prev_block_hash = blockchain._hash(prev_block)
     block = blockchain.create_block(proof=proof , previous_hash=prev_block_hash)
+    
     response = {'message': 'Congratulations, you just mined a block!',
                 'index': block['index'],
                 'timestamp': block['timestamp'],
@@ -92,9 +95,9 @@ def get_chain():
     return jsonify(response), 200
 
 
-@app.route('/is_valid', method=['GET'])
+@app.route('/is_valid', methods=['GET'])
 def is_valid():
-    response = {'is_valid': blockchain.is_chain_valid()}
+    response = {'is_valid': blockchain.is_chain_valid(blockchain.chain)}
     return jsonify(response), 200
 
 app.run(host= '0.0.0.0', port= 5000)
