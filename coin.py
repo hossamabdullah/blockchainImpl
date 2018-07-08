@@ -99,8 +99,8 @@ class Blockchain:
                 max_length = length
         if longest_chain:
             self.chain = longest_chain
-            return true
-                
+            return True
+        return False
         
 #part 2 - Mining our Blockchain
 app = Flask(__name__)
@@ -155,6 +155,7 @@ def add_transaction():
     response = {'message': f'This transaction will be added to block {index}'}
     return jsonify(response), 201
 
+#part3- decentralizing our blockchain
 @app.route('/connect_node', methods=['POST'])
 def connect_node():
     json = request.get_json()
@@ -166,8 +167,17 @@ def connect_node():
         blockchain.add_node(node)
     response = {"message": "Nodes added correctly, here are all nodes", "list": list(blockchain.nodes)}
     return jsonify(response), 201
-#part3- decentralizing our blockchain
 
+@app.route('/check_chains', methods=['GET'])
+def check_chains():
+    is_chain_replaced = blockchain.replace_chain()
+    if is_chain_replaced:
+        message = {'message': 'another longer chain found',
+                    'mew_chain': blockchain.chain}
+    else:
+        response = {'message': 'Good for you',
+                    'actual_chain': blockchain.chain}
+    return jsonify(response), 200
 
-
+    
 app.run(host= '0.0.0.0', port= 5000)
