@@ -113,6 +113,7 @@ transactions = []
 
 @app.route('/mine_block', methods = ['GET'])
 def mine_block():
+    global transactions
     prev_block = blockchain.get_previous_block()
     
     prev_proof = prev_block['proof']
@@ -144,6 +145,7 @@ def is_valid():
 
 @app.route('/add_trans', methods=['POST'])
 def add_transaction():
+    global transactions
     json = request.get_json()
     transaction_keys = ['sender', 'receiver', 'amount']
     if not all (key in json for key in transaction_keys):
@@ -175,9 +177,9 @@ def check_chains():
         message = {'message': 'another longer chain found',
                     'mew_chain': blockchain.chain}
     else:
-        response = {'message': 'Good for you',
+        message = {'message': 'Good for you',
                     'actual_chain': blockchain.chain}
-    return jsonify(response), 200
+    return jsonify(message), 200
 
     
 app.run(host= '0.0.0.0', port= 5001)
