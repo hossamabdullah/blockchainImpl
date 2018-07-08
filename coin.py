@@ -19,7 +19,8 @@ class Blockchain:
     def __init__(self):
             self.chain = []
             self.create_block(proof = 1, previous_hash = '0')
-        
+            self.nodes = set()
+
     def mine(self, previous_proof):
         new_proof = 1
         check_proof = False
@@ -61,7 +62,11 @@ class Blockchain:
             block_index += 1
         return True
     
-    def add_transaction(self, transactions,  sender, receiver, amount):
+    def add_node(self, address):
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+
+    def add_transaction(transactions,  sender, receiver, amount):
         transactions.append({
             'sender': sender,
             'receiver': receiver,
@@ -75,7 +80,27 @@ class Blockchain:
     
     def _try_nonce(self, proof, prev_proof):
         return hashlib.sha256(str(proof**2 -  prev_proof**2).encode()).hexdigest()
-        
+    
+    def _get_chain(node):
+        response = requests.get(f'http://{node}/get_chain')
+        if response.status_code == 200:
+            length = response.json()['length']
+            chain = response.json()['chain']
+        return (chain, length)
+
+    def replace_chain(self):
+        network = self.nodes
+        longest_chain = None
+        max_length = len(self.chain)
+        for node in network:
+            
+                if length > max_length and self.is_chain_valid(chain):
+                    longest_chain = chain
+                    max_length = length
+        if longest_chain:
+            self.chain = longest_chain
+            return true
+                
         
 #part 2 - Mining our Blockchain
 app = Flask(__name__)
@@ -111,6 +136,7 @@ def get_chain():
 def is_valid():
     response = {'is_valid': blockchain.is_chain_valid(blockchain.chain)}
     return jsonify(response), 200
+
 
 #part3- decentralizing our blockchain
 
