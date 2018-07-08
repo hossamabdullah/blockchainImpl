@@ -66,7 +66,7 @@ class Blockchain:
         parsed_url = urlparse(address)
         self.nodes.add(parsed_url.netloc)
 
-    def add_transaction(transactions,  sender, receiver, amount):
+    def add_transaction(self, transactions,  sender, receiver, amount):
         transactions.append({
             'sender': sender,
             'receiver': receiver,
@@ -81,7 +81,7 @@ class Blockchain:
     def _try_nonce(self, proof, prev_proof):
         return hashlib.sha256(str(proof**2 -  prev_proof**2).encode()).hexdigest()
     
-    def _get_chain(node):
+    def _get_chain(self, node):
         response = requests.get(f'http://{node}/get_chain')
         if response.status_code == 200:
             length = response.json()['length']
@@ -93,10 +93,10 @@ class Blockchain:
         longest_chain = None
         max_length = len(self.chain)
         for node in network:
-            
-                if length > max_length and self.is_chain_valid(chain):
-                    longest_chain = chain
-                    max_length = length
+            chain, length = self._get_chain(node)
+            if length > max_length and self.is_chain_valid(chain):
+                longest_chain = chain
+                max_length = length
         if longest_chain:
             self.chain = longest_chain
             return true
@@ -105,7 +105,11 @@ class Blockchain:
 #part 2 - Mining our Blockchain
 app = Flask(__name__)
 
+node_address = str(uuid4()).replace('-', '')
+# node_address = "http://127.0.0.1:5000"
+
 blockchain = Blockchain()
+transactions = []
 
 @app.route('/mine_block', methods = ['GET'])
 def mine_block():
@@ -113,15 +117,16 @@ def mine_block():
     
     prev_proof = prev_block['proof']
     proof = blockchain.mine(previous_proof= prev_proof)
-    
     prev_block_hash = blockchain._hash(prev_block)
-    block = blockchain.create_block(proof=proof , previous_hash=prev_block_hash)
+    transactions = blockchain.add_transaction(transactions, sender=node_address, receiver='Hadelin', amount=1)
+    block = blockchain.create_block(proof=proof , previous_hash=prev_block_hash, transactions=transactions)
     
     response = {'message': 'Congratulations, you just mined a block!',
                 'index': block['index'],
                 'timestamp': block['timestamp'],
                 'proof': block['proof'],
-                'previous_hash': block['previous_hash']}
+                'previous_hash': block['previous_hash'],
+                'transactions': block['transactions']}
     return jsonify(response), 200
 
 
@@ -136,6 +141,21 @@ def get_chain():
 def is_valid():
     response = {'is_valid': blockchain.is_chain_valid(blockchain.chain)}
     return jsonify(response), 200
+
+@app.route('/add_trans', methods=['POST'])
+def add_transaction():
+    json = request.get_json()
+    transaction_keys = ['sender', 'receiver', 'amount']
+    if not all (key in json for key in transaction_keys):
+        return "some transaction keys are missing", 400
+    
+    previous_block = blockchain.get_previous_block()
+    index = previous_block['index'] + 1
+
+    transactions = blockchain.add_transaction(transactions, json['sender'], json['receiver'], json['amount'])
+
+    response = {'message': f'This transaction will be added to block {index}'}
+    return jsonify(response), 201
 
 
 #part3- decentralizing our blockchain
