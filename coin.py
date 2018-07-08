@@ -18,7 +18,7 @@ class Blockchain:
     
     def __init__(self):
             self.chain = []
-            self.create_block(proof = 1, previous_hash = '0')
+            self.create_block(proof = 1, previous_hash = '0', transactions= [])
             self.nodes = set()
 
     def mine(self, previous_proof):
@@ -151,13 +151,21 @@ def add_transaction():
     
     previous_block = blockchain.get_previous_block()
     index = previous_block['index'] + 1
-
     transactions = blockchain.add_transaction(transactions, json['sender'], json['receiver'], json['amount'])
-
     response = {'message': f'This transaction will be added to block {index}'}
     return jsonify(response), 201
 
-
+@app.route('/connect_node', methods=['POST'])
+def connect_node():
+    json = request.get_json()
+    nodes = json.get('nodes')
+    if nodes is None:
+        return "No node", 400
+    
+    for node in nodes:
+        blockchain.add_node(node)
+    response = {"message": "Nodes added correctly, here are all nodes", "list": list(blockchain.nodes)}
+    return jsonify(response), 201
 #part3- decentralizing our blockchain
 
 
